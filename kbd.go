@@ -38,10 +38,14 @@ func SendInput(inputs []C.INPUT) error {
 
 // GetInputByCode return a C.INPUT by a Code
 func GetInputByCode(code Code, evt KeyEvent) C.INPUT {
+	if code > 255 {
+		evt = evt | keyExtended
+	}
+
 	input := C.INPUT{_type: C.DWORD(inputKeyboard)}
 	(*wInput)(unsafe.Pointer(&input)).ki = wKeybdInput{
-		WVk:     uint16(code),
-		DwFlags: uint32(evt),
+		WScan:   uint16(code),
+		DwFlags: uint32(evt) | uint32(keyScancode),
 	}
 
 	return input
@@ -66,18 +70,18 @@ func TapKeys(codes []Code, mod Modifiers) error {
 
 	if mod > 0 {
 		if mod&ModShift == ModShift {
-			pressInputs = append(pressInputs, GetInputByCode(Shift, KeyDown))
-			releaseInputs = append(releaseInputs, GetInputByCode(Shift, KeyUp))
+			pressInputs = append(pressInputs, GetInputByCode(LeftShift, KeyDown))
+			releaseInputs = append(releaseInputs, GetInputByCode(LeftShift, KeyUp))
 		}
 
 		if mod&ModControl == ModControl {
-			pressInputs = append(pressInputs, GetInputByCode(Control, KeyDown))
-			releaseInputs = append(releaseInputs, GetInputByCode(Control, KeyUp))
+			pressInputs = append(pressInputs, GetInputByCode(LeftControl, KeyDown))
+			releaseInputs = append(releaseInputs, GetInputByCode(LeftControl, KeyUp))
 		}
 
 		if mod&ModAlt == ModAlt {
-			pressInputs = append(pressInputs, GetInputByCode(Alt, KeyDown))
-			releaseInputs = append(releaseInputs, GetInputByCode(Alt, KeyUp))
+			pressInputs = append(pressInputs, GetInputByCode(LeftAlt, KeyDown))
+			releaseInputs = append(releaseInputs, GetInputByCode(LeftAlt, KeyUp))
 		}
 
 		if mod&ModMeta == ModMeta {
@@ -105,15 +109,15 @@ func ToggleKey(code Code, evt KeyEvent, mod Modifiers) error {
 
 	if mod > 0 {
 		if mod&ModShift == ModShift {
-			inputs = append(inputs, GetInputByCode(Shift, evt))
+			inputs = append(inputs, GetInputByCode(LeftShift, evt))
 		}
 
 		if mod&ModControl == ModControl {
-			inputs = append(inputs, GetInputByCode(Control, evt))
+			inputs = append(inputs, GetInputByCode(LeftControl, evt))
 		}
 
 		if mod&ModAlt == ModAlt {
-			inputs = append(inputs, GetInputByCode(Alt, evt))
+			inputs = append(inputs, GetInputByCode(LeftAlt, evt))
 		}
 
 		if mod&ModMeta == ModMeta {

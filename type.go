@@ -21,6 +21,6 @@ type wKeybdInput struct {
 	DwExtraInfo uintptr
 }
 
-// Code is a Virtual-Key Code
-// https://msdn.microsoft.com/en-us/library/windows/desktop/dd375731(v=vs.85).aspx
+// Code is a keyboard scancode
+// https://en.wikipedia.org/wiki/Scancode
 type Code uint16
