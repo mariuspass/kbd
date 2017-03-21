@@ -1,15 +1,12 @@
 package kbd
 
 import (
-	// #include <wtypes.h>
-	"C"
 	"errors"
 	"syscall"
-	"unsafe"
 )
 
 var (
-	procSendInput = syscall.NewLazyDLL("user32.dll").NewProc("SendInput")
+	procKeybdEvent = syscall.NewLazyDLL("user32.dll").NewProc("keybd_event")
 
 	// KeysMap contains a map of all key code by name
 	KeysMap = map[string]Code{}
@@ -22,51 +19,49 @@ func init() {
 }
 
 // SendInput function send inputs events to user32.dll
-func SendInput(inputs []C.INPUT) error {
-	ret, _, _ := procSendInput.Call(
-		uintptr(len(inputs)),
-		uintptr(unsafe.Pointer(&inputs[0])),
-		uintptr(unsafe.Sizeof(C.INPUT{})),
-	)
+func SendInput(inputs []Input) (err error) {
+	for _, i := range inputs {
+		_, _, ret := procKeybdEvent.Call(
+			0,
+			uintptr(i.Code),
+			uintptr(i.Evnt),
+			0,
+		)
 
-	if ret == 0 {
-		return errors.New("The input was already blocked by another thread")
+		if ret.Error() != "The operation completed successfully." {
+			err = ret
+			break
+		}
 	}
 
-	return nil
+	return err
 }
 
-// GetInputByCode return a C.INPUT by a Code
-func GetInputByCode(code Code, evt KeyEvent) C.INPUT {
+// GetInputByCode return a Input by a Code
+func GetInputByCode(code Code, evt KeyEvent) Input {
 	if code > 255 {
 		evt = evt | keyExtended
 	}
 
-	input := C.INPUT{_type: C.DWORD(inputKeyboard)}
-	(*wInput)(unsafe.Pointer(&input)).ki = wKeybdInput{
-		WScan:   uint16(code),
-		DwFlags: uint32(evt) | uint32(keyScancode),
+	return Input{
+		Code: code,
+		Evnt: evt | keyScancode,
 	}
-
-	return input
 }
 
-// GetInputByRune return a C.INPUT by a rune
-func GetInputByRune(r int32, evt KeyEvent) C.INPUT {
-	input := C.INPUT{_type: C.DWORD(inputKeyboard)}
-	(*wInput)(unsafe.Pointer(&input)).ki = wKeybdInput{
-		WScan:   uint16(r),
-		DwFlags: uint32(evt) | uint32(keyUnicode),
+// GetInputByRune return a Input by a rune
+func GetInputByRune(r int32, evt KeyEvent) Input {
+	return Input{
+		Code: Code(r),
+		Evnt: evt | keyUnicode,
 	}
-
-	return input
 }
 
 // TapKeys press and release a key or more with or without modifiers.
 // Modifers are: ModCtrl, ModShift, ModAlt and ModMeta
 func TapKeys(codes []Code, mod Modifiers) error {
-	pressInputs := []C.INPUT{}
-	releaseInputs := []C.INPUT{}
+	pressInputs := []Input{}
+	releaseInputs := []Input{}
 
 	if mod > 0 {
 		if mod&ModShift == ModShift {
@@ -105,7 +100,7 @@ func ToggleKey(code Code, evt KeyEvent, mod Modifiers) error {
 		return errors.New("KeyEvent must be KeyDown or KeyUp")
 	}
 
-	inputs := []C.INPUT{}
+	inputs := []Input{}
 
 	if mod > 0 {
 		if mod&ModShift == ModShift {
@@ -136,7 +131,7 @@ func TypeString(str string) error {
 		return errors.New("The string cannot be empty")
 	}
 
-	inputs := []C.INPUT{}
+	inputs := []Input{}
 
 	for _, s := range str {
 		inputs = append(inputs, GetInputByRune(s, KeyDown))

@@ -17,7 +17,3 @@ const (
 	ModAlt     Modifiers = 1 << 2
 	ModMeta    Modifiers = 1 << 3 // Windows key
 )
-
-const (
-	inputKeyboard = 1
-)
