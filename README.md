@@ -35,4 +35,4 @@ func main() {
 	kbd.TapKeys([]kbd.Code{kbd.Escape}, kbd.ModShift|kbd.ModControl)
 	// Task Manager should be open
 
-}```
+}
