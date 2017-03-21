@@ -1,3 +1,5 @@
+// +build windows
+
 //go:generate stringer -type=Code
 
 package kbd

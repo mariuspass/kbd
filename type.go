@@ -1,3 +1,5 @@
+// +build windows
+
 package kbd
 
 // KeyEvent specifies various aspects of a keystroke
